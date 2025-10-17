@@ -1,30 +1,135 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="ProdHub" />
-  <link rel="apple-touch-icon" href="icons/icon-192.png" />
-  <link rel="manifest" href="manifest.json" />
-  <title>Productivity Hub</title>
-  <link rel="stylesheet" href="styles.css" />
-</head>
-<body>
-  <header class="app-header">
-    <h1>Productivity Hub</h1>
-  </header>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Productivity Hub</title>
+    <meta name="description" content="Offline PWA: To‑Do, Notes, Habits, Settings" />
 
-  <main id="content" class="content"></main>
+    <!-- PWA: iOS fullscreen / status bar -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Productivity Hub" />
+    <!-- iOS will generate icon if apple-touch-icon PNG is missing -->
 
-  <nav class="bottom-nav">
-    <button id="tab-todos" data-tab="todos">✅ Дела</button>
-    <button id="tab-notes" data-tab="notes">📝 Заметки</button>
-    <button id="tab-habits" data-tab="habits">📆 Привычки</button>
-    <button id="tab-settings" data-tab="settings">⚙️ Настройки</button>
-  </nav>
+    <!-- PWA: General -->
+    <meta name="theme-color" content="#0b0b0f" />
+    <link rel="manifest" href="./manifest.json" />
 
-  <script type="module" src="app.js"></script>
-</body>
-</html>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <noscript>Требуется JavaScript.</noscript>
+
+    <header class="app-header" role="banner">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="logo-mark">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="var(--accent)" />
+              <stop offset="100%" stop-color="#a78bfa" />
+            </linearGradient>
+          </defs>
+          <path fill="url(#g)" d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.6 7.1-5.2 6a1 1 0 0 1-1.5.05l-2.2-2.2a1 1 0 1 1 1.4-1.42l1.44 1.45 4.48-5.18a1 1 0 0 1 1.54 1.22Z"/>
+        </svg>
+        <span class="logo-text">Productivity Hub</span>
+      </div>
+      <div class="header-actions">
+        <button id="quick-add" class="pill" title="Быстрое добавление задачи">+ Задача</button>
+      </div>
+    </header>
+
+    <main id="view" class="view" role="main">
+      <!-- To-Do -->
+      <section id="tab-todo" class="tab active" aria-labelledby="nav-todo" role="region">
+        <form id="todo-form" class="card add-form" autocomplete="off">
+          <input id="todo-input" class="input" type="text" placeholder="Добавить задачу…" aria-label="Новая задача" />
+          <select id="todo-filter" class="select" aria-label="Фильтр">
+            <option value="all">Все</option>
+            <option value="active">Активные</option>
+            <option value="done">Выполненные</option>
+          </select>
+          <button type="submit" class="btn">Добавить</button>
+        </form>
+        <ul id="todo-list" class="list"></ul>
+      </section>
+
+      <!-- Notes -->
+      <section id="tab-notes" class="tab" aria-labelledby="nav-notes" role="region">
+        <div class="toolbar card">
+          <button id="new-note" class="btn">Новая заметка</button>
+          <input id="note-search" class="input" placeholder="Поиск…" />
+        </div>
+        <div id="notes-grid" class="grid"></div>
+      </section>
+
+      <!-- Habits -->
+      <section id="tab-habits" class="tab" aria-labelledby="nav-habits" role="region">
+        <form id="habit-form" class="card add-form" autocomplete="off">
+          <input id="habit-input" class="input" type="text" placeholder="Новая привычка (ежедневно)…" aria-label="Новая привычка" />
+          <button type="submit" class="btn">Добавить</button>
+        </form>
+        <ul id="habit-list" class="list habits"></ul>
+      </section>
+
+      <!-- Settings -->
+      <section id="tab-settings" class="tab" aria-labelledby="nav-settings" role="region">
+        <div class="card">
+          <h2>Экспорт / Импорт</h2>
+          <div class="row">
+            <button id="export-json" class="btn">Экспорт JSON</button>
+            <label class="btn secondary">
+              Импорт JSON
+              <input id="import-json" type="file" accept="application/json" hidden />
+            </label>
+            <button id="clear-data" class="btn danger">Сбросить данные</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Оформление</h2>
+          <div class="row">
+            <div class="swatch" data-color="#22d3ee" title="#22d3ee"></div>
+            <div class="swatch" data-color="#a78bfa" title="#a78bfa"></div>
+            <div class="swatch" data-color="#34d399" title="#34d399"></div>
+            <div class="swatch" data-color="#f472b6" title="#f472b6"></div>
+            <div class="swatch" data-color="#f59e0b" title="#f59e0b"></div>
+          </div>
+          <div class="row">
+            <label class="toggle">
+              <input id="toggle-amoled" type="checkbox" />
+              <span>Глубокая тёмная тема (AMOLED)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Установка на iPhone</h2>
+          <p>Откройте в Safari → Поделиться → На экран «Домой», затем откройте из иконки (без адресной строки).</p>
+        </div>
+      </section>
+    </main>
+
+    <nav class="tabbar" role="tablist">
+      <button id="nav-todo" class="tabbtn active" data-tab="todo" aria-controls="tab-todo" aria-selected="true">
+        <span class="ico">✓</span>
+        <span class="label">To‑Do</span>
+      </button>
+      <button id="nav-notes" class="tabbtn" data-tab="notes" aria-controls="tab-notes">
+        <span class="ico">✎</span>
+        <span class="label">Заметки</span>
+      </button>
+      <button id="nav-habits" class="tabbtn" data-tab="habits" aria-controls="tab-habits">
+        <span class="ico">★</span>
+        <span class="label">Привычки</span>
+      </button>
+      <button id="nav-settings" class="tabbtn" data-tab="settings" aria-controls="tab-settings">
+        <span class="ico">⚙</span>
+        <span class="label">Настройки</span>
+      </button>
+    </nav>
+
+    <script src="./app.js" defer></script>
+  </body>
+  </html>
+
