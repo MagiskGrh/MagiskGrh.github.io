@@ -1,40 +1,32 @@
-const taskInput = document.getElementById('taskInput');
-const addBtn = document.getElementById('addBtn');
-const taskList = document.getElementById('taskList');
+import { renderTodos } from './modules/todos.js';
+import { renderNotes } from './modules/notes.js';
+import { renderHabits } from './modules/habits.js';
+import { renderSettings } from './modules/settings.js';
 
-let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+const content = document.getElementById('content');
+const tabs = document.querySelectorAll('.bottom-nav button');
 
-function renderTasks() {
-  taskList.innerHTML = '';
-  tasks.forEach((task, index) => {
-    const li = document.createElement('li');
-    li.textContent = task;
-    li.onclick = () => toggleTask(index);
-    taskList.appendChild(li);
-  });
+function setActive(tabId) {
+  tabs.forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
 }
 
-function toggleTask(index) {
-  tasks.splice(index, 1);
-  saveTasks();
+export function showSection(tabId) {
+  setActive(tabId);
+  if (tabId === 'todos') renderTodos(content);
+  if (tabId === 'notes') renderNotes(content);
+  if (tabId === 'habits') renderHabits(content);
+  if (tabId === 'settings') renderSettings(content);
+  location.hash = tabId;
 }
 
-function saveTasks() {
-  localStorage.setItem('tasks', JSON.stringify(tasks));
-  renderTasks();
-}
+tabs.forEach(b => b.addEventListener('click', () => showSection(b.dataset.tab)));
 
-addBtn.onclick = () => {
-  const text = taskInput.value.trim();
-  if (text) {
-    tasks.push(text);
-    saveTasks();
-    taskInput.value = '';
+window.addEventListener('DOMContentLoaded', () => {
+  // Default tab based on hash or todos
+  const initial = location.hash?.replace('#','') || 'todos';
+  showSection(initial);
+  // Register service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./service-worker.js');
   }
-};
-
-renderTasks();
-
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js');
-}
+});
